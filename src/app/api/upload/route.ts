@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
                 branch,
                 sha, // only include if updating existing
             });
-        } catch (e) {
-        console.error("Failed to update manifest.json", e);
+        } catch (ee) {
+        console.error("Failed to update manifest.json", ee);
         }
 
 
