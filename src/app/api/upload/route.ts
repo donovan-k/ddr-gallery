@@ -74,6 +74,50 @@ export async function POST(request: NextRequest) {
             jsdelivr_commit: `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${commitSha}/${filename}`,
         };
 
+        // after you generate urls
+        const manifestPath = "manifest.json";
+
+        try {
+            // Step 1: Try to get the current manifest
+            let manifestContent: string[] = [];
+            let sha: string | undefined;
+
+            try {
+                const { data } = await octokit.repos.getContent({
+                    owner,
+                    repo,
+                    path: manifestPath,
+                    ref: branch,
+                });
+
+                if ("content" in data) {
+                    const existing = Buffer.from(data.content, "base64").toString();
+                    manifestContent = JSON.parse(existing);
+                    sha = data.sha; // needed to update existing file
+                }
+            } catch (e) {
+                // if not found, start fresh
+                manifestContent = [];
+            }
+
+            // Step 2: Add the new jsDelivr URL (branch-based or commit-based)
+            manifestContent.push(urls.jsdelivr);
+
+            // Step 3: Commit the updated manifest.json back to GitHub
+            await octokit.repos.createOrUpdateFileContents({
+                owner,
+                repo,
+                path: manifestPath,
+                message: `Update manifest.json with ${filename}`,
+                content: Buffer.from(JSON.stringify(manifestContent, null, 2)).toString("base64"),
+                branch,
+                sha, // only include if updating existing
+            });
+        } catch (e) {
+        console.error("Failed to update manifest.json", e);
+        }
+
+
         return NextResponse.json({
             success: true,
             url: urls.raw, // Default URL for backward compatibility
