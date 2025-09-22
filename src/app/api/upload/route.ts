@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
                     manifestContent = JSON.parse(existing);
                     sha = data.sha; // needed to update existing file
                 }
-            } catch (e) {
+            } catch {
                 // if not found, start fresh
                 manifestContent = [];
             }
